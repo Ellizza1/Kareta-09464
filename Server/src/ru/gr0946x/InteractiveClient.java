@@ -18,69 +18,73 @@ public class InteractiveClient {
     public static void main(String[] args) {
 
         try (
-                Socket socket =
-                        new Socket(
-                                "localhost",
-                                ProtocolConstants.DEFAULT_PORT
-                        );
+            Socket socket =
+                    new Socket(
+                            "localhost",
+                            ProtocolConstants.DEFAULT_PORT
+                    );
 
-                PrintWriter out =
-                        new PrintWriter(
-                                socket.getOutputStream(),
-                                true
-                        );
+            PrintWriter out =
+                    new PrintWriter(
+                            socket.getOutputStream(),
+                            true
+                    );
 
-                BufferedReader in =
-                        new BufferedReader(
-                                new InputStreamReader(
-                                        socket.getInputStream()
-                                )
-                        );
+            BufferedReader in =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    socket.getInputStream()
+                            )
+                    );
 
-                Scanner scanner =
-                        new Scanner(System.in)
-        ) {
+            Scanner scanner =
+                new Scanner(System.in)
+        ) 
+        {
 
             System.out.println("Подключено к серверу!");
 
             System.out.println(
-                    "Регистрация:"
+                "Регистрация:"
             );
 
             System.out.println(
-                    "REGISTER:логин:пароль"
+                "REGISTER:логин:пароль"
             );
 
             System.out.println(
-                    "Вход:"
+                 "Вход:"
             );
 
             System.out.println(
-                    "LOGIN:логин:пароль"
+                "LOGIN:логин:пароль"
             );
 
             System.out.println(
-                    "Общий чат:"
+                "Общий чат:"
             );
 
             System.out.println(
-                    "ALL:текст"
+                "ALL:текст"
             );
 
             System.out.println(
-                    "Личное сообщение:"
+                "Личное сообщение:"
             );
 
             System.out.println(
-                    "PRIVATE:пользователь:текст"
+                "PRIVATE:пользователь:текст"
             );
 
             System.out.println(
-                    "Для просмотра истории:"
+                "Для просмотра истории:"
             );
 
             System.out.println(
-                    "HISTORY:пользователь1:пользователь2"
+                "HISTORY:пользователь1:пользователь2"
+            );
+            System.out.println(
+                "SEARCH:текст"
             );
 
             // =====================================
@@ -95,7 +99,7 @@ public class InteractiveClient {
 
                     while ((incoming = in.readLine()) != null) {
 
-                        String[] parts = incoming.split(":");
+                        String[] parts = incoming.split(":", 3);
 
                         // ============================
                         // СООБЩЕНИЯ ЧАТА
@@ -142,6 +146,22 @@ public class InteractiveClient {
 
                             System.out.println(
                                     "[ИСТОРИЯ] "
+                                            + sender
+                                            + ": "
+                                            + text
+                            );
+                        }
+                        // ============================
+                        // ПОИСК
+                        // ============================
+
+                        else if ("SEARCH_RESULT".equals(parts[0])) {
+                            String sender = parts[1];
+
+                            String text = parts[2];
+
+                            System.out.println(
+                                    "[ПОИСК] "
                                             + sender
                                             + ": "
                                             + text
@@ -280,6 +300,11 @@ public class InteractiveClient {
                 else if (input.startsWith("HISTORY:")) {
 
                     request = input;
+                }
+                else if (input.startsWith("SEARCH:")) {
+                    request = input;
+                    out.println(request);
+                    continue;
                 }
 
                 // ============================

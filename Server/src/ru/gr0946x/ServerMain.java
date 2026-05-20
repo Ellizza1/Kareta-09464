@@ -298,6 +298,36 @@ public class ServerMain {
                                     }
                                 }
                             }
+                            else if ("SEARCH".equals(commandType)) {
+
+                                if (parts.length >= 2) {
+
+                                    String query = parts[1];
+
+                                    List<Message> results =
+                                            messageRepository
+                                                    .findByTextContainingIgnoreCase(query);
+
+                                    for (Message msg : results) {
+
+                                        String sender =
+                                                msg.getSender()
+                                                        .getUsername();
+
+                                        String text =
+                                                msg.getText();
+
+                                        comm.sendData(
+                                                "SEARCH_RESULT:"
+                                                        + sender
+                                                        + ":"
+                                                        + text
+                                        );
+                                    }
+                                }
+                            }
+
+
                         });
 
                         comm.start();

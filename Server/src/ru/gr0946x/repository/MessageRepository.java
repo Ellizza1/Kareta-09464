@@ -28,4 +28,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
         ORDER BY m.sentAt DESC
     """)
     List<Message> findChatHistory(String user1, String user2);
+    List<Message> findByTextContainingIgnoreCase(
+            String text
+    );
 }
