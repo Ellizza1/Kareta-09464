@@ -1,3 +1,5 @@
+package ru.gr0946x; // Проверь свой пакет, если он нужен
+
 import ru.gr0946x.net.Client;
 import ru.gr0946x.ui.ChatWindow;
 import ru.gr0946x.ui.Ui;
@@ -9,8 +11,10 @@ public class Main {
             var c = new Client("localhost", 9460);
             Ui ui = new ChatWindow(); 
             
+            // Связываем UI и Сеть через ссылки на методы
             ui.addUserDataListener(c::sendData);
             c.addDataListener(ui::showInfo);
+            
             c.start();
             ui.start();
         } catch (IOException e) {

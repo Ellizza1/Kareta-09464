@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 public class ChatWindow extends JFrame implements Ui {
     
+    // Список слушателей для отправки данных ИЗ окна В класс Client
     private final List<Consumer<String>> listeners = new ArrayList<>();
     
     private JTextArea chatArea;
@@ -19,30 +20,27 @@ public class ChatWindow extends JFrame implements Ui {
     private DefaultListModel<String> listModel;
 
     public ChatWindow() {
-        // Настройка главного окна
         setTitle("Мессенджер Карета");
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null); // Центрирование на экране
+        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Главное поле чата (вывод сообщений)
+        // Поле чата
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setLineWrap(true);
         add(new JScrollPane(chatArea), BorderLayout.CENTER);
 
-        // Боковая панель со списком активных пользователей
+        // Список пользователей
         listModel = new DefaultListModel<>();
         userList = new JList<>(listModel);
         userList.setPreferredSize(new Dimension(150, 0));
-        
-        // Пример заполнения (для теста, потом данные будут идти от сервера)
         listModel.addElement("Общий чат (всем)");
         userList.setSelectedIndex(0); 
         add(new JScrollPane(userList), BorderLayout.EAST);
 
-        // Нижняя панель ввода
+        // Панель ввода
         JPanel bottomPanel = new JPanel(new BorderLayout());
         messageField = new JTextField();
         JButton sendButton = new JButton("Отправить");
@@ -51,7 +49,6 @@ public class ChatWindow extends JFrame implements Ui {
         bottomPanel.add(sendButton, BorderLayout.EAST);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Обработка отправки по клику или по нажатию Enter
         sendButton.addActionListener(e -> sendMessage());
         messageField.addActionListener(e -> sendMessage());
     }
@@ -59,8 +56,8 @@ public class ChatWindow extends JFrame implements Ui {
     private void sendMessage() {
         String text = messageField.getText().trim();
         if (!text.isEmpty()) {
-            // Оповещаем слушателей (в данном случае Client), что пользователь ввел данные
-            for (var listener : listeners) {
+            // Отправляем чистый текст в Client
+            for (Consumer<String> listener : listeners) {
                 listener.accept(text);
             }
             messageField.setText("");
@@ -69,11 +66,21 @@ public class ChatWindow extends JFrame implements Ui {
 
     @Override
     public void start() {
-        // Запуск UI в потоке обработки событий Swing
         SwingUtilities.invokeLater(() -> this.setVisible(true));
-    }
 
-@Override
+    }
+    // @Override
+    // public void start() {
+    //     SwingUtilities.invokeLater(() -> {
+    //         this.setVisible(true);
+    //         // Принудительно выводим стартовую строку сразу при открытии окна
+    //         chatArea.append("[Система]: Подключение к серверу успешно...\n");
+    //         chatArea.append("[Система]: Введите имя в поле ниже для входа:\n");
+    //     });
+    // }
+
+    // Этот метод вызывается, когда Client получает данные от сервера и передает их в UI
+    @Override
     public void showInfo(final String data, final MessageType type) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -90,7 +97,7 @@ public class ChatWindow extends JFrame implements Ui {
                     case ERROR:
                         JOptionPane.showMessageDialog(ChatWindow.this, data, "Ошибка", JOptionPane.ERROR_MESSAGE);
                         break;
-                    default:
+                    default: // Для типов INFO, REQUEST и т.д.
                         chatArea.append("[Система]: " + data + "\n");
                         break;
                 }
