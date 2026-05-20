@@ -44,7 +44,19 @@ public class InteractiveClient {
             System.out.println("Подключено к серверу!");
 
             System.out.println(
-                    "Для регистрации просто введи имя."
+                    "Регистрация:"
+            );
+
+            System.out.println(
+                    "REGISTER:логин:пароль"
+            );
+
+            System.out.println(
+                    "Вход:"
+            );
+
+            System.out.println(
+                    "LOGIN:логин:пароль"
             );
 
             System.out.println(
@@ -149,44 +161,43 @@ public class InteractiveClient {
                         // ============================
 
                         else {
-
-                            System.out.println(
-                                    "\n[СЕРВЕР]: "
-                                            + incoming
-                            );
-
-                            // Успешная регистрация
-                            if (incoming.startsWith("INFO:SUCCESS:User ")) {
-
-                                String[] infoParts = incoming.split(":");
-
-                                String raw = infoParts[2];
+                            if (incoming.startsWith(
+                                    "REGISTER_SUCCESS:"
+                            )) {
 
                                 registeredUsername =
-                                        raw.replace("User ", "")
-                                                .replace(" registered", "")
-                                                .trim();
+                                        incoming.replace(
+                                                "REGISTER_SUCCESS:",
+                                                ""
+                                        );
 
                                 System.out.println(
-                                        "Вы вошли как: "
+                                        "Регистрация успешна: "
                                                 + registeredUsername
                                 );
                             }
 
-                            // Если пользователь уже существует — тоже логинимся
-                            else if (incoming.startsWith("ERROR:User ")
-                                    && incoming.contains("already exists")) {
+                            else if (incoming.startsWith(
+                                    "LOGIN_SUCCESS:"
+                            )) {
 
-                                String raw =
-                                        incoming.replace("ERROR:User ", "")
-                                                .replace(" already exists", "")
-                                                .trim();
-
-                                registeredUsername = raw;
+                                registeredUsername =
+                                        incoming.replace(
+                                                "LOGIN_SUCCESS:",
+                                                ""
+                                        );
 
                                 System.out.println(
-                                        "Вход выполнен как: "
+                                        "Вход выполнен: "
                                                 + registeredUsername
+                                );
+                            }
+                                // остальные ответы сервера
+                            else {
+
+                                System.out.println(
+                                        "\n[СЕРВЕР]: "
+                                                + incoming
                                 );
                             }
                         }
@@ -275,14 +286,79 @@ public class InteractiveClient {
                 // РЕГИСТРАЦИЯ
                 // ============================
 
-                else {
+                else if (input.startsWith("REGISTER:")) {
+
+                    String[] regParts =
+                            input.split(":", 3);
+
+                    if (regParts.length < 3) {
+
+                        System.out.println(
+                                "Формат: REGISTER:логин:пароль"
+                        );
+
+                        continue;
+                    }
 
                     request =
-                            MessageType.REQUEST.name()
-                                    + ProtocolConstants.COMMAND_SEPARATOR
-                                    + "REGISTER"
-                                    + ProtocolConstants.COMMAND_SEPARATOR
-                                    + input;
+                            "REGISTER:"
+                                    + regParts[1]
+                                    + ":"
+                                    + regParts[2];
+
+                    out.println(request);
+                }
+
+                else if (input.startsWith("LOGIN:")) {
+
+                    String[] loginParts =
+                            input.split(":", 3);
+
+                    if (loginParts.length < 3) {
+
+                        System.out.println(
+                                "Формат: LOGIN:логин:пароль"
+                        );
+
+                        continue;
+                    }
+
+                    request =
+                            "LOGIN:"
+                                    + loginParts[1]
+                                    + ":"
+                                    + loginParts[2];
+
+                    out.println(request);
+                }
+
+                else {
+
+                    System.out.println(
+                            "Неизвестная команда!"
+                    );
+
+                    System.out.println(
+                            "REGISTER:логин:пароль"
+                    );
+
+                    System.out.println(
+                            "LOGIN:логин:пароль"
+                    );
+
+                    System.out.println(
+                            "ALL:текст"
+                    );
+
+                    System.out.println(
+                            "PRIVATE:пользователь:текст"
+                    );
+
+                    System.out.println(
+                            "HISTORY:user1:user2"
+                    );
+
+                    continue;
                 }
 
                 out.println(request);

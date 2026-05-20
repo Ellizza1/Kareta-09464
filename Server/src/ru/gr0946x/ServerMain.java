@@ -83,44 +83,85 @@ public class ServerMain {
                             // РЕГИСТРАЦИЯ
                             // =====================================
 
-                            if ("REQUEST".equals(commandType)) {
+                            if ("REGISTER".equals(commandType)) {
+                                if (parts.length >= 3) {
 
-                                if (parts.length >= 3
-                                        && "REGISTER".equals(parts[1])) {
+                                    String username = parts[1];
 
-                                    String username = parts[2];
+                                    String password = parts[2];
 
                                     if (userRepository
                                             .findByUsernameIgnoreCase(username)
                                             .isPresent()) {
 
-                                        userConnections.put(username.toLowerCase(), comm);
-                                        broadcastUsers();
                                         comm.sendData(
-                                                "ERROR:User "
-                                                        + username
-                                                        + " already exists"
+                                                "ERROR:User already exists"
                                         );
 
                                     } else {
 
-                                        userRepository.save(
-                                                new User(
-                                                        username,
-                                                        "default_password"
-                                                )
+                                        User user =
+                                                new User(username, password);
+
+                                        userRepository.save(user);
+
+                                        userConnections.put(
+                                                username.toLowerCase(),
+                                                comm
                                         );
-                                        userConnections.put(username.toLowerCase(), comm);
+
                                         broadcastUsers();
 
                                         comm.sendData(
-                                                "INFO:SUCCESS:User "
+                                                "REGISTER_SUCCESS:"
                                                         + username
-                                                        + " registered"
                                         );
                                     }
                                 }
                             }
+                            else if ("LOGIN".equals(commandType)) {
+
+                                if (parts.length >= 3) {
+
+                                    String username = parts[1];
+
+                                    String password = parts[2];
+
+                                    User user =
+                                            userRepository
+                                                    .findByUsernameIgnoreCase(username)
+                                                    .orElse(null);
+
+                                    if (user == null) {
+
+                                        comm.sendData(
+                                                "ERROR:User not found"
+                                        );
+
+                                    } else if (!user.getPassword()
+                                            .equals(password)) {
+
+                                        comm.sendData(
+                                                "ERROR:Wrong password"
+                                        );
+
+                                    } else {
+
+                                        userConnections.put(
+                                                username.toLowerCase(),
+                                                comm
+                                        );
+
+                                        broadcastUsers();
+
+                                        comm.sendData(
+                                                "LOGIN_SUCCESS:"
+                                                        + username
+                                        );
+                                    }
+                                }
+                            }
+
 
                           else if ("MESSAGE_ALL".equals(commandType)) {
 
