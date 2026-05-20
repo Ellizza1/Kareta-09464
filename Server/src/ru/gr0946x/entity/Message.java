@@ -15,7 +15,7 @@ public class Message {
     private User sender;
 
     @ManyToOne
-    @JoinColumn(name = "recipient_id") // NULL, если это общий чат
+    @JoinColumn(name = "recipient_id")
     private User recipient;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -26,11 +26,22 @@ public class Message {
 
     public Message() {}
 
+    // Конструктор, который ты используешь в ServerMain
+    public Message(User sender, String text) {
+        this.sender = sender;
+        this.text = text;
+    }
+
     public Message(User sender, User recipient, String text) {
         this.sender = sender;
         this.recipient = recipient;
         this.text = text;
     }
+
+    // Обязательно добавь сеттеры, чтобы Hibernate мог корректно работать с полями
+    public void setSender(User sender) { this.sender = sender; }
+    public void setRecipient(User recipient) { this.recipient = recipient; }
+    public void setText(String text) { this.text = text; }
 
     public Long getId() { return id; }
     public User getSender() { return sender; }

@@ -13,18 +13,41 @@ public class InteractiveClient {
              BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              Scanner scanner = new Scanner(System.in)) {
 
-            System.out.println("Подключено к серверу! Введи имя для регистрации:");
+            System.out.println("Подключено к серверу!");
+            System.out.println("Для регистрации просто введи имя.");
+            System.out.println("Для отправки сообщения введи: MESSAGE:Твой текст");
 
+            // ПОТОК ДЛЯ ЧТЕНИЯ СООБЩЕНИЙ ОТ СЕРВЕРА
+            // Это позволит получать сообщения от других в реальном времени
+            new Thread(() -> {
+                try {
+                    String incoming;
+                    while ((incoming = in.readLine()) != null) {
+                        System.out.println("\n[СЕРВЕР]: " + incoming);
+                        System.out.print("> "); // просто для удобства ввода
+                    }
+                } catch (IOException e) {
+                    System.out.println("\nСоединение с сервером потеряно.");
+                }
+            }).start();
+
+            // ОСНОВНОЙ ЦИКЛ ОТПРАВКИ
             while (true) {
+                System.out.print("> ");
                 String input = scanner.nextLine();
                 if ("exit".equalsIgnoreCase(input)) break;
 
-                // Формируем сообщение: ТИП:КОМАНДА:ИМЯ
-                String request = MessageType.REQUEST.name() + ProtocolConstants.COMMAND_SEPARATOR + 
-                                 "REGISTER" + ProtocolConstants.COMMAND_SEPARATOR + input;
+                String request;
+                // Проверяем, является ли ввод командой сообщения
+                if (input.startsWith("MESSAGE:")) {
+                    request = input; 
+                } else {
+                    // Иначе считаем это запросом на регистрацию
+                    request = MessageType.REQUEST.name() + ProtocolConstants.COMMAND_SEPARATOR + 
+                              "REGISTER" + ProtocolConstants.COMMAND_SEPARATOR + input;
+                }
                 
                 out.println(request);
-                System.out.println("Ответ сервера: " + in.readLine());
             }
         } catch (IOException e) {
             System.err.println("Ошибка клиента: " + e.getMessage());

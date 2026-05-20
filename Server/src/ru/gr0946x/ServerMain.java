@@ -8,17 +8,23 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
+import ru.gr0946x.entity.Message;
 import ru.gr0946x.entity.User;
 import ru.gr0946x.net.Communicator;
 import ru.gr0946x.net.ProtocolConstants;
+import ru.gr0946x.repository.MessageRepository;
 import ru.gr0946x.repository.UserRepository;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.sql.DataSource;
 
 @SpringBootApplication(scanBasePackages = "ru.gr0946x")
 public class ServerMain {
+
+    private final List<Communicator> clients = new CopyOnWriteArrayList<>();
 
     public static void main(String[] args) {
         System.setProperty("spring.classformat.ignore", "true");
@@ -26,7 +32,7 @@ public class ServerMain {
     }
 
     @Bean
-    public CommandLineRunner runServer(UserRepository userRepository) {
+    public CommandLineRunner runServer(UserRepository userRepository, MessageRepository messageRepository) {
         return args -> {
             new Thread(() -> {
                 try (ServerSocket serverSocket = new ServerSocket(ProtocolConstants.DEFAULT_PORT)) {
@@ -35,20 +41,44 @@ public class ServerMain {
                     while (true) {
                         Socket clientSocket = serverSocket.accept();
                         Communicator comm = new Communicator(clientSocket);
+                        clients.add(comm);
                         
                         comm.addDataListener(data -> {
                             System.out.println("Получено: " + data);
                             String[] parts = data.split(ProtocolConstants.COMMAND_SEPARATOR);
                             
-                            // Проверка: REQUEST:REGISTER:Имя
-                            if (parts.length >= 3 && "REQUEST".equals(parts[0]) && "REGISTER".equals(parts[1])) {
-                                String username = parts[2];
-                                
-                                if (userRepository.findByUsername(username).isPresent()) {
-                                    comm.sendData("ERROR:User " + username + " already exists");
-                                } else {
-                                    userRepository.save(new User(username, "default_password"));
-                                    comm.sendData("INFO:SUCCESS:User " + username + " registered");
+                            if (parts.length == 0) return;
+                            String commandType = parts[0];
+
+                            // 1. ЛОГИКА РЕГИСТРАЦИИ (REQUEST:REGISTER:имя)
+                            if ("REQUEST".equals(commandType)) {
+                                if (parts.length >= 3 && "REGISTER".equals(parts[1])) {
+                                    String username = parts[2];
+                                    if (userRepository.findByUsername(username).isPresent()) {
+                                        comm.sendData("ERROR:User " + username + " already exists");
+                                    } else {
+                                        userRepository.save(new User(username, "default_password"));
+                                        comm.sendData("INFO:SUCCESS:User " + username + " registered");
+                                    }
+                                }
+                            } 
+                            // 2. ЛОГИКА ЧАТА (MESSAGE:текст)
+                            else if ("MESSAGE".equals(commandType)) {
+                                if (parts.length >= 2) {
+                                    String msgText = parts[1];
+                                    
+                                    // ВАЖНО: Тебе нужно найти пользователя по имени, 
+                                    // которое пришло от клиента (или хранится в сессии)
+                                    // Например, если мы знаем, кто отправил:
+                                    User sender = userRepository.findByUsername("имя_отправителя").orElse(null);
+                                    
+                                    if (sender != null) {
+                                        messageRepository.save(new Message(sender, msgText));
+                                    }
+                                    
+                                    for (Communicator client : clients) {
+                                        client.sendData("MESSAGE:Broadcast: " + msgText);
+                                    }
                                 }
                             }
                         });
@@ -77,7 +107,6 @@ public class ServerMain {
         em.setDataSource(dataSource);
         em.setPackagesToScan("ru.gr0946x.entity");
         em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-        // Добавим автоматическое создание таблиц при запуске
         java.util.Properties props = new java.util.Properties();
         props.setProperty("hibernate.hbm2ddl.auto", "update");
         em.setJpaProperties(props);
