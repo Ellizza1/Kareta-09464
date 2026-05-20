@@ -1,4 +1,4 @@
-package ru.gr0946x; // Проверь свой пакет, если он нужен
+//package ru.gr0946x; // Проверь свой пакет, если он нужен
 
 import ru.gr0946x.net.Client;
 import ru.gr0946x.ui.ChatWindow;
