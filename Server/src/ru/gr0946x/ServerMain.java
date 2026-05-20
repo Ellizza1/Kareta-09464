@@ -54,7 +54,9 @@ public class ServerMain {
                             if ("REQUEST".equals(commandType)) {
                                 if (parts.length >= 3 && "REGISTER".equals(parts[1])) {
                                     String username = parts[2];
-                                    if (userRepository.findByUsername(username).isPresent()) {
+                                    
+                                    // Использование регистронезависимого поиска
+                                    if (userRepository.findByUsernameIgnoreCase(username).isPresent()) {
                                         comm.sendData("ERROR:User " + username + " already exists");
                                     } else {
                                         userRepository.save(new User(username, "default_password"));
@@ -67,14 +69,9 @@ public class ServerMain {
                                 if (parts.length >= 2) {
                                     String msgText = parts[1];
                                     
-                                    // ВАЖНО: Тебе нужно найти пользователя по имени, 
-                                    // которое пришло от клиента (или хранится в сессии)
-                                    // Например, если мы знаем, кто отправил:
-                                    User sender = userRepository.findByUsername("имя_отправителя").orElse(null);
-                                    
-                                    if (sender != null) {
-                                        messageRepository.save(new Message(sender, msgText));
-                                    }
+                                    // Примечание: Для полноценного сохранения отправителя, 
+                                    // нужно сохранять имя пользователя в объекте Communicator 
+                                    // при регистрации и извлекать его здесь.
                                     
                                     for (Communicator client : clients) {
                                         client.sendData("MESSAGE:Broadcast: " + msgText);

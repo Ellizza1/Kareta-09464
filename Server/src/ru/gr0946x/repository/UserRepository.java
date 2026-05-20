@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     // Spring сам сгенерирует поиск пользователя по его имени для авторизации!
     Optional<User> findByUsername(String username);
+
+    Optional<User> findByUsernameIgnoreCase(String username);
 }
