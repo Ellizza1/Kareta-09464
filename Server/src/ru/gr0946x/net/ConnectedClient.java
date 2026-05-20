@@ -19,12 +19,17 @@ public class ConnectedClient implements Runnable {
     private User dbUser; // Объект пользователя из БД
     private String name;
 
-    public ConnectedClient(Socket socket, Server server, UserRepository userRepository, MessageRepository messageRepository) {
+    // Добавляем throws IOException в заголовок конструктора
+    public ConnectedClient(Socket socket, Server server, UserRepository userRepository, MessageRepository messageRepository) throws IOException {
         this.socket = socket;
         this.server = server;
         this.userRepository = userRepository;
         this.messageRepository = messageRepository;
+
+        // Теперь компилятор спокоен: если здесь будет ошибка,
+        // создание объекта прервется, и final-поле не останется сломанным
         this.communicator = new Communicator(socket);
+
         this.communicator.addDataListener(this::parseIncomingData);
     }
 

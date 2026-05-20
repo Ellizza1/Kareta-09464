@@ -1,6 +1,6 @@
 package ru.gr0946x.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity

@@ -1,6 +1,13 @@
 package ru.gr0946x.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.OneToMany; // Если есть связь с сообщениями
+import java.util.List;               // Если используется список сообщений
 
 @Entity
 @Table(name = "users")
