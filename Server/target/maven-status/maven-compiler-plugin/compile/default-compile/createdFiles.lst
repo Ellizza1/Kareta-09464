@@ -1,10 +1,10 @@
 ru/gr0946x/net/MessageType.class
-ru/gr0946x/net/ProtocolConstants.class
-ru/gr0946x/ServerMain.class
 ru/gr0946x/entity/Message.class
 ru/gr0946x/entity/User.class
+ru/gr0946x/net/ConnectedClient.class
+ru/gr0946x/net/ProtocolConstants.class
+ru/gr0946x/ServerMain.class
 ru/gr0946x/net/Communicator.class
 ru/gr0946x/net/Server.class
 ru/gr0946x/repository/UserRepository.class
-ru/gr0946x/net/ConnectedClient.class
 ru/gr0946x/repository/MessageRepository.class

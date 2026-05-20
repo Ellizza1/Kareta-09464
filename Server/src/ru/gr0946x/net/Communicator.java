@@ -11,11 +11,15 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class Communicator {
+    private String username;
     private final Socket socket;
     private final BufferedReader in;
     private final PrintWriter out;
     private boolean isActive;
 
+    public void setUsername(String username) { this.username = username; }
+    public String getUsername() { return username; }
+    
     private final List<Consumer<String>> dataListeners = new ArrayList<>();
 
     public void addDataListener(Consumer<String> c){

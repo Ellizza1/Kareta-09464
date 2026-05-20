@@ -23,6 +23,13 @@ public class Message {
 
     @Column(name = "sent_at", nullable = false)
     private LocalDateTime sentAt = LocalDateTime.now();
+    @Enumerated(EnumType.STRING)
+    
+    @Column(nullable = false)
+    private MessageStatus status = MessageStatus.SENT;
+
+    public MessageStatus getStatus() { return status; }
+    public void setStatus(MessageStatus status) { this.status = status; }
 
     public Message() {}
 
