@@ -20,6 +20,8 @@ import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
@@ -27,6 +29,8 @@ import javax.sql.DataSource;
 public class ServerMain {
 
     private final List<Communicator> clients = new CopyOnWriteArrayList<>();
+    private final Map<String, Communicator> userConnections =
+        new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         System.setProperty("spring.classformat.ignore", "true");
@@ -90,6 +94,7 @@ public class ServerMain {
                                             .findByUsernameIgnoreCase(username)
                                             .isPresent()) {
 
+                                        userConnections.put(username.toLowerCase(), comm);
                                         comm.sendData(
                                                 "ERROR:User "
                                                         + username
@@ -104,6 +109,7 @@ public class ServerMain {
                                                         "default_password"
                                                 )
                                         );
+                                        userConnections.put(username.toLowerCase(), comm);
 
                                         comm.sendData(
                                                 "INFO:SUCCESS:User "
@@ -114,11 +120,7 @@ public class ServerMain {
                                 }
                             }
 
-                            // =====================================
-                            // ОТПРАВКА СООБЩЕНИЙ
-                            // =====================================
-
-                            else if ("MESSAGE".equals(commandType)) {
+                          else if ("MESSAGE_ALL".equals(commandType)) {
 
                                 if (parts.length >= 3) {
 
@@ -128,36 +130,24 @@ public class ServerMain {
 
                                     User sender =
                                             userRepository
-                                                    .findByUsernameIgnoreCase(
-                                                            senderName
-                                                    )
+                                                    .findByUsernameIgnoreCase(senderName)
                                                     .orElse(null);
-
-                                    // Пока общий чат
-                                    User recipient = null;
 
                                     if (sender != null) {
 
-                                        Message message = new Message();
+                                        Message message =
+                                                new Message(sender, null, msgText);
 
-                                        message.setSender(sender);
-
-                                        message.setRecipient(recipient);
-
-                                        message.setText(msgText);
-
-                                        message.setSentAt(
-                                                LocalDateTime.now()
-                                        );
+                                        message.setSentAt(LocalDateTime.now());
 
                                         messageRepository.save(message);
                                     }
 
-                                    // Рассылка всем клиентам
+                                    // Всем клиентам
                                     for (Communicator client : clients) {
 
                                         client.sendData(
-                                                "MESSAGE:0:"
+                                                "MESSAGE:"
                                                         + senderName
                                                         + ":"
                                                         + msgText
@@ -165,6 +155,67 @@ public class ServerMain {
                                     }
                                 }
                             }
+
+                            // =====================================
+                            // ЛИЧНОЕ СООБЩЕНИЕ
+                            // =====================================
+
+                            else if ("MESSAGE_PRIVATE".equals(commandType)) {
+
+                                if (parts.length >= 4) {
+
+                                    String senderName = parts[1];
+
+                                    String recipientName = parts[2];
+
+                                    String msgText = parts[3];
+
+                                    User sender =
+                                            userRepository
+                                                    .findByUsernameIgnoreCase(senderName)
+                                                    .orElse(null);
+
+                                    User recipient =
+                                            userRepository
+                                                    .findByUsernameIgnoreCase(recipientName)
+                                                    .orElse(null);
+
+                                    if (sender != null && recipient != null) {
+
+                                        Message message =
+                                                new Message(sender, recipient, msgText);
+
+                                        message.setSentAt(LocalDateTime.now());
+
+                                        messageRepository.save(message);
+
+                                        Communicator recipientComm =
+                                                userConnections.get(
+                                                        recipientName.toLowerCase()
+                                                );
+
+                                        // Отправка получателю
+                                        if (recipientComm != null) {
+
+                                            recipientComm.sendData(
+                                                    "PRIVATE:"
+                                                            + senderName
+                                                            + ":"
+                                                            + msgText
+                                            );
+                                        }
+
+                                        // Отправка отправителю
+                                        comm.sendData(
+                                                "PRIVATE:"
+                                                        + senderName
+                                                        + ":"
+                                                        + msgText
+                                        );
+                                    }
+                                }
+                            }
+                            
 
                             // =====================================
                             // ИСТОРИЯ СООБЩЕНИЙ

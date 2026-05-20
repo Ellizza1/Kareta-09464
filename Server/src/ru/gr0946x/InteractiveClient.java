@@ -48,11 +48,19 @@ public class InteractiveClient {
             );
 
             System.out.println(
-                    "Для отправки сообщения:"
+                    "Общий чат:"
             );
 
             System.out.println(
-                    "MESSAGE:Текст сообщения"
+                    "ALL:текст"
+            );
+
+            System.out.println(
+                    "Личное сообщение:"
+            );
+
+            System.out.println(
+                    "PRIVATE:пользователь:текст"
             );
 
             System.out.println(
@@ -81,24 +89,33 @@ public class InteractiveClient {
                         // СООБЩЕНИЯ ЧАТА
                         // ============================
 
-                        if (parts.length >= 4
+                        if (parts.length >= 3
                                 && "MESSAGE".equals(parts[0])) {
 
-                            String msgId = parts[1];
+                            String senderName = parts[1];
 
-                            String senderName = parts[2];
-
-                            String text = parts[3];
+                            String text = parts[2];
 
                             System.out.println(
-                                    "\n"
+                                    "\n[ОБЩИЙ ЧАТ] "
                                             + senderName
                                             + ": "
                                             + text
                             );
+                        }
+                        else if (parts.length >= 3
+                                && "PRIVATE".equals(parts[0])) {
 
-                            // Подтверждение прочтения
-                            out.println("READ:" + msgId);
+                            String senderName = parts[1];
+
+                            String text = parts[2];
+
+                            System.out.println(
+                                    "\n[ЛИЧНОЕ] "
+                                            + senderName
+                                            + ": "
+                                            + text
+                            );
                         }
 
                         // ============================
@@ -197,8 +214,7 @@ public class InteractiveClient {
                 // ============================
                 // ОТПРАВКА СООБЩЕНИЯ
                 // ============================
-
-                if (input.startsWith("MESSAGE:")) {
+                if (input.startsWith("ALL:")) {
 
                     if (registeredUsername == null) {
 
@@ -209,15 +225,33 @@ public class InteractiveClient {
                         continue;
                     }
 
-                    String msgText =
-                            input.substring(8);
+                    String msgText = input.substring(4);
 
                     request =
-                            "MESSAGE"
-                                    + ProtocolConstants.COMMAND_SEPARATOR
+                            "MESSAGE_ALL:"
                                     + registeredUsername
-                                    + ProtocolConstants.COMMAND_SEPARATOR
+                                    + ":"
                                     + msgText;
+                }
+
+                // Личное сообщение
+                else if (input.startsWith("PRIVATE:")) {
+
+                    if (registeredUsername == null) {
+
+                        System.out.println(
+                                "Сначала зарегистрируйтесь!"
+                        );
+
+                        continue;
+                    }
+
+                    // PRIVATE:lll:привет
+                    request =
+                            "MESSAGE_PRIVATE:"
+                                    + registeredUsername
+                                    + ":"
+                                    + input.substring(8);
                 }
 
                 // ============================
