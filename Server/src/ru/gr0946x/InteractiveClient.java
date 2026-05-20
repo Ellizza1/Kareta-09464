@@ -135,6 +135,14 @@ public class InteractiveClient {
                                             + text
                             );
                         }
+                        else if ("USERS".equals(parts[0])) {
+                            String users =
+                                    incoming.replace("USERS:", "");
+
+                            System.out.println(
+                                    "\n[ОНЛАЙН] " + users
+                            );
+                        }
 
                         // ============================
                         // ОТВЕТЫ СЕРВЕРА

@@ -95,6 +95,7 @@ public class ServerMain {
                                             .isPresent()) {
 
                                         userConnections.put(username.toLowerCase(), comm);
+                                        broadcastUsers();
                                         comm.sendData(
                                                 "ERROR:User "
                                                         + username
@@ -110,6 +111,7 @@ public class ServerMain {
                                                 )
                                         );
                                         userConnections.put(username.toLowerCase(), comm);
+                                        broadcastUsers();
 
                                         comm.sendData(
                                                 "INFO:SUCCESS:User "
@@ -258,6 +260,23 @@ public class ServerMain {
                         });
 
                         comm.start();
+                        new Thread(() -> {
+                            try {
+
+                                while (!clientSocket.isClosed()) {
+                                    Thread.sleep(1000);
+                                }
+
+                            } catch (Exception ignored) {
+                            }
+
+                            clients.remove(comm);
+
+                            userConnections.values().remove(comm);
+
+                            broadcastUsers();
+
+                        }).start();
                     }
 
                 } catch (Exception e) {
@@ -319,5 +338,23 @@ public class ServerMain {
         em.setJpaProperties(props);
 
         return em;
+    }
+
+    private void broadcastUsers() {
+
+        StringBuilder users = new StringBuilder();
+
+        for (String username : userConnections.keySet()) {
+
+            users.append(username).append(",");
+        }
+
+        String usersMessage =
+                "USERS:" + users;
+
+        for (Communicator client : clients) {
+
+            client.sendData(usersMessage);
+        }
     }
 }
