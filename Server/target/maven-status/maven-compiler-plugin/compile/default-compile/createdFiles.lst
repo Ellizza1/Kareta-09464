@@ -1,4 +1,6 @@
 ru/gr0946x/net/MessageType.class
+ru/gr0946x/entity/MessageStatus.class
+ru/gr0946x/InteractiveClient.class
 ru/gr0946x/entity/Message.class
 ru/gr0946x/entity/User.class
 ru/gr0946x/net/ConnectedClient.class

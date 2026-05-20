@@ -24,7 +24,7 @@ public class Message {
     @Column(name = "sent_at", nullable = false)
     private LocalDateTime sentAt = LocalDateTime.now();
     @Enumerated(EnumType.STRING)
-    
+
     @Column(nullable = false)
     private MessageStatus status = MessageStatus.SENT;
 
@@ -47,8 +47,14 @@ public class Message {
 
     // Обязательно добавь сеттеры, чтобы Hibernate мог корректно работать с полями
     public void setSender(User sender) { this.sender = sender; }
+
     public void setRecipient(User recipient) { this.recipient = recipient; }
+
     public void setText(String text) { this.text = text; }
+
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
+    }
 
     public Long getId() { return id; }
     public User getSender() { return sender; }
