@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.gr0946x.entity.Message;
+import ru.gr0946x.entity.MessageStatus;
 
 import java.util.List;
 
@@ -30,5 +31,12 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findChatHistory(String user1, String user2);
     List<Message> findByTextContainingIgnoreCase(
             String text
+    );
+    List<Message> findByRecipientUsernameIgnoreCaseAndStatus(
+        String username,
+        MessageStatus status
+    );
+    List<Message> findByRecipientIsNullAndStatus(
+        MessageStatus status
     );
 }

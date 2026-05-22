@@ -99,32 +99,44 @@ public class InteractiveClient {
 
                     while ((incoming = in.readLine()) != null) {
 
-                        String[] parts = incoming.split(":", 3);
+                        String[] parts = incoming.split(":", 4);
 
                         // ============================
                         // СООБЩЕНИЯ ЧАТА
                         // ============================
 
-                        if (parts.length >= 3
-                                && "MESSAGE".equals(parts[0])) {
+                    if (parts.length >= 4
+                            && "MESSAGE".equals(parts[0])) {
 
-                            String senderName = parts[1];
+                        String msgId = parts[1];
 
-                            String text = parts[2];
+                        String senderName = parts[2];
 
-                            System.out.println(
-                                    "\n[ОБЩИЙ ЧАТ] "
-                                            + senderName
-                                            + ": "
-                                            + text
-                            );
+                        String text = parts[3];
+
+                        System.out.println(
+                                "\n[ОБЩИЙ ЧАТ] "
+                                        + senderName
+                                        + ": "
+                                        + text
+                        );
+
+                        // READ только если сообщение не своё
+                        if (!senderName.equalsIgnoreCase(
+                                registeredUsername
+                        )) {
+
+                            out.println("READ:" + msgId);
                         }
-                        else if (parts.length >= 3
+                    }
+                        else if (parts.length >= 4
                                 && "PRIVATE".equals(parts[0])) {
 
-                            String senderName = parts[1];
+                            String msgId = parts[1];
 
-                            String text = parts[2];
+                            String senderName = parts[2];
+
+                            String text = parts[3];
 
                             System.out.println(
                                     "\n[ЛИЧНОЕ] "
@@ -132,6 +144,8 @@ public class InteractiveClient {
                                             + ": "
                                             + text
                             );
+
+                            out.println("READ:" + msgId);
                         }
 
                         // ============================

@@ -9,6 +9,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
 import ru.gr0946x.entity.Message;
+import ru.gr0946x.entity.MessageStatus;
 import ru.gr0946x.entity.User;
 import ru.gr0946x.net.Communicator;
 import ru.gr0946x.net.ProtocolConstants;
@@ -90,6 +91,16 @@ public class ServerMain {
 
                                     String password = parts[2];
 
+                                    // Имя должно начинаться с буквы
+                                    if (!username.matches("^[a-zA-Zа-яА-Я].*")) {
+
+                                        comm.sendData(
+                                                "ERROR:Username must start with a letter"
+                                        );
+
+                                        return;
+                                    }
+
                                     if (userRepository
                                             .findByUsernameIgnoreCase(username)
                                             .isPresent()) {
@@ -158,7 +169,61 @@ public class ServerMain {
                                                 "LOGIN_SUCCESS:"
                                                         + username
                                         );
+
+                                        // =====================================
+                                        // НЕПРОЧИТАННЫЕ ЛИЧНЫЕ
+                                        // =====================================
+
+                                        List<Message> unreadMessages =
+                                                messageRepository
+                                                        .findByRecipientUsernameIgnoreCaseAndStatus(
+                                                                username,
+                                                                MessageStatus.SENT
+                                                        );
+
+                                        for (Message msg : unreadMessages) {
+
+                                            comm.sendData(
+                                                    "PRIVATE:"
+                                                            + msg.getId()
+                                                            + ":"
+                                                            + msg.getSender().getUsername()
+                                                            + ":"
+                                                            + msg.getText()
+                                            );
+                                        }
+
+                                        // =====================================
+                                        // НЕПРОЧИТАННЫЕ ОБЩИЕ
+                                        // =====================================
+
+                                        List<Message> unreadGlobal =
+                                                messageRepository
+                                                        .findByRecipientIsNullAndStatus(
+                                                                MessageStatus.SENT
+                                                        );
+
+                                        for (Message msg : unreadGlobal) {
+
+                                            // не отправляем автору
+                                            if (!msg.getSender()
+                                                    .getUsername()
+                                                    .equalsIgnoreCase(username)) {
+
+                                                comm.sendData(
+                                                        "MESSAGE:"
+                                                                + msg.getId()
+                                                                + ":"
+                                                                + msg.getSender().getUsername()
+                                                                + ":"
+                                                                + msg.getText()
+                                                );
+                                            }
+                                        }
+
+
                                     }
+
                                 }
                             }
 
@@ -183,19 +248,26 @@ public class ServerMain {
 
                                         message.setSentAt(LocalDateTime.now());
 
-                                        messageRepository.save(message);
+                                        Message savedMessage =
+                                                messageRepository.save(message);
+
+                                        Long messageId =
+                                                savedMessage.getId();
+
+                                        // Всем клиентам
+                                        for (Communicator client : clients) {
+
+                                            client.sendData(
+                                                    "MESSAGE:"
+                                                            + messageId
+                                                            + ":"
+                                                            + senderName
+                                                            + ":"
+                                                            + msgText
+                                            );
+                                        }
                                     }
 
-                                    // Всем клиентам
-                                    for (Communicator client : clients) {
-
-                                        client.sendData(
-                                                "MESSAGE:"
-                                                        + senderName
-                                                        + ":"
-                                                        + msgText
-                                        );
-                                    }
                                 }
                             }
 
@@ -230,7 +302,11 @@ public class ServerMain {
 
                                         message.setSentAt(LocalDateTime.now());
 
+                                        Message savedMessage =
                                         messageRepository.save(message);
+
+                                        Long messageId =
+                                            savedMessage.getId();
 
                                         Communicator recipientComm =
                                                 userConnections.get(
@@ -241,20 +317,15 @@ public class ServerMain {
                                         if (recipientComm != null) {
 
                                             recipientComm.sendData(
-                                                    "PRIVATE:"
-                                                            + senderName
-                                                            + ":"
-                                                            + msgText
-                                            );
-                                        }
-
-                                        // Отправка отправителю
-                                        comm.sendData(
                                                 "PRIVATE:"
+                                                        + messageId
+                                                        + ":"
                                                         + senderName
                                                         + ":"
                                                         + msgText
-                                        );
+                                            );
+                                        }
+
                                     }
                                 }
                             }
@@ -298,6 +369,38 @@ public class ServerMain {
                                     }
                                 }
                             }
+                            
+                            else if ("READ".equals(commandType)) {
+                                if (parts.length >= 2) {
+
+                                    Long msgId =
+                                            Long.parseLong(parts[1]);
+
+                                    Message msg =
+                                            messageRepository
+                                                    .findById(msgId)
+                                                    .orElse(null);
+
+                                    if (msg != null) {
+
+                                        msg.setStatus(
+                                                MessageStatus.READ
+                                        );
+
+                                        messageRepository.save(msg);
+
+                                        System.out.println(
+                                                "Сообщение "
+                                                        + msgId
+                                                        + " прочитано"
+                                        );
+                                    }
+                                }
+                            }
+
+
+
+
                             else if ("SEARCH".equals(commandType)) {
 
                                 if (parts.length >= 2) {
